@@ -4,7 +4,7 @@
 
 **Coinvert** 是一個極致輕量、專為現代瀏覽器設計的匯率換算工具。它採用 Progressive Web App (PWA) 架構，無需下載 App，即可在 iPhone 或 Android 上享有如同原生應用程式般的流暢體驗。
 
-[在此處貼上您的 GitHub Pages 網址] 👈 **點擊立即使用**
+(https://godjerry228.github.io/coinvert/) 👈 **點擊立即使用**
 
 ---
 
@@ -35,7 +35,7 @@
 4.  點擊右上角的 **「新增」**。
 
 ### Android / Desktop (Chrome/Edge)
-1.  使用瀏覽器打開網址。
+1.  使用瀏覽器打開網址 (https://godjerry228.github.io/coinvert/)。
 2.  點擊右上角的「設定 (齒輪)」圖示。
 3.  點擊 **「加入主畫面」** 選項 (若瀏覽器支援，按鈕會自動顯示)。
 
