@@ -10,6 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
     <link rel="apple-touch-icon" href="app.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
 
     <style>
         :root {
@@ -99,6 +101,29 @@
             height: 24px;
         }
 
+        .icon-edit {
+            fill: var(--accent-color);
+            width: 24px;
+            height: 24px;
+        }
+
+        .icon-check {
+            fill: #4cd964;
+            width: 24px;
+            height: 24px;
+        }
+
+        .icon-reorder {
+            fill: var(--text-secondary);
+            width: 24px;
+            height: 24px;
+            cursor: grab;
+        }
+
+        .icon-reorder:active {
+            cursor: grabbing;
+        }
+
         /* --- Main View --- */
         #main-header {
             padding: 10px 20px;
@@ -166,17 +191,34 @@
             height: 64px;
             gap: 8px;
             overflow: hidden;
-            cursor: grab;
             transition: opacity 0.2s, transform 0.2s;
         }
 
         .currency-slot.dragging {
             opacity: 0.5;
-            cursor: grabbing;
         }
 
         .currency-slot.drag-over {
             transform: translateY(4px);
+        }
+
+        .slot-reorder-handle {
+            display: none;
+            padding: 0 12px;
+            touch-action: none;
+        }
+
+        .edit-mode .slot-reorder-handle {
+            display: flex;
+            align-items: center;
+        }
+
+        .edit-mode .slot-info {
+            pointer-events: none;
+        }
+
+        .edit-mode .slot-amount {
+            pointer-events: none;
         }
 
         .slot-info {
@@ -408,6 +450,11 @@
                             <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
                         </svg>
                     </div>
+                    <div id="btn-edit" class="btn-refresh" onclick="toggleEditMode()">
+                        <svg class="icon-edit" viewBox="0 0 24 24">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                        </svg>
+                    </div>
                     <div class="btn-refresh" onclick="fetchRates()">
                         <svg class="icon-refresh" viewBox="0 0 24 24">
                             <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
@@ -480,6 +527,13 @@
                         <span class="settings-value" id="default-currency-display">USD</span>
                     </div>
                 </div>
+                <div class="settings-section">
+                    <div class="settings-title">應用程式</div>
+                    <div class="settings-option" id="install-button" onclick="promptInstall()" style="display: none;">
+                        <span class="settings-label">加入主畫面</span>
+                        <span class="settings-value">📱</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -514,7 +568,10 @@
             currentValue: '0',
             changingSlotIndex: null,
             defaultCurrency: 'USD',
-            draggedIndex: null
+            draggedIndex: null,
+            isEditMode: false,
+            touchStartY: 0,
+            touchCurrentY: 0
         };
 
         // 從 localStorage 載入設定
@@ -585,14 +642,26 @@
         function renderMainSlots() {
             const container = document.getElementById('currency-slots');
             container.innerHTML = '';
+
+            // 切換編輯模式樣式
+            if (state.isEditMode) {
+                container.classList.add('edit-mode');
+            } else {
+                container.classList.remove('edit-mode');
+            }
+
             state.displaySlots.forEach((code, index) => {
                 const info = getInfo(code);
                 const slot = document.createElement('div');
                 slot.className = `currency-slot ${index === state.activeIndex ? 'active' : ''}`;
-                slot.draggable = true;
                 slot.dataset.index = index;
 
                 slot.innerHTML = `
+                <div class="slot-reorder-handle">
+                    <svg class="icon-reorder" viewBox="0 0 24 24">
+                        <path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                    </svg>
+                </div>
                 <div class="slot-info">
                     <img src="${getFlagUrl(info.country)}" class="flag-img" alt="${info.code}">
                     <span class="slot-code">${info.code}</span>
@@ -600,76 +669,176 @@
                 <span class="slot-amount" id="amt-${index}">0</span>
             `;
 
-                // 拖曳事件
-                slot.addEventListener('dragstart', handleDragStart);
-                slot.addEventListener('dragover', handleDragOver);
-                slot.addEventListener('drop', handleDrop);
-                slot.addEventListener('dragend', handleDragEnd);
+                if (state.isEditMode) {
+                    // 編輯模式：拖曳事件（觸控 + 滑鼠）
+                    const handle = slot.querySelector('.slot-reorder-handle');
+                    // 觸控事件
+                    handle.addEventListener('touchstart', handleTouchStart);
+                    handle.addEventListener('touchmove', handleTouchMove);
+                    handle.addEventListener('touchend', handleTouchEnd);
+                    // 滑鼠事件
+                    handle.addEventListener('mousedown', handleMouseDown);
+                } else {
+                    // 一般模式：點擊事件
+                    const slotInfo = slot.querySelector('.slot-info');
+                    slotInfo.onclick = (e) => {
+                        e.stopPropagation();
+                        openSelectionView(index);
+                    };
 
-                const slotInfo = slot.querySelector('.slot-info');
-                slotInfo.onclick = (e) => {
-                    e.stopPropagation();
-                    openSelectionView(index);
-                };
-
-                const slotAmount = slot.querySelector('.slot-amount');
-                slotAmount.onclick = () => {
-                    if (state.activeIndex !== index) {
-                        state.activeIndex = index;
-                        state.currentValue = '0';
-                        renderMainSlots();
-                        updateCalculations();
-                        saveSettings();
-                    }
-                };
+                    const slotAmount = slot.querySelector('.slot-amount');
+                    slotAmount.onclick = () => {
+                        if (state.activeIndex !== index) {
+                            state.activeIndex = index;
+                            state.currentValue = '0';
+                            renderMainSlots();
+                            updateCalculations();
+                            saveSettings();
+                        }
+                    };
+                }
 
                 container.appendChild(slot);
             });
         }
 
-        function handleDragStart(e) {
-            state.draggedIndex = parseInt(e.currentTarget.dataset.index);
-            e.currentTarget.classList.add('dragging');
-        }
+        // 編輯模式切換
+        function toggleEditMode() {
+            state.isEditMode = !state.isEditMode;
+            const btnEdit = document.getElementById('btn-edit');
 
-        function handleDragOver(e) {
-            e.preventDefault();
-            const target = e.currentTarget;
-            if (!target.classList.contains('dragging')) {
-                target.classList.add('drag-over');
-            }
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            const dropIndex = parseInt(e.currentTarget.dataset.index);
-
-            if (state.draggedIndex !== null && state.draggedIndex !== dropIndex) {
-                const draggedCode = state.displaySlots[state.draggedIndex];
-                state.displaySlots.splice(state.draggedIndex, 1);
-                state.displaySlots.splice(dropIndex, 0, draggedCode);
-
-                // 更新 activeIndex
-                if (state.activeIndex === state.draggedIndex) {
-                    state.activeIndex = dropIndex;
-                } else if (state.draggedIndex < state.activeIndex && dropIndex >= state.activeIndex) {
-                    state.activeIndex--;
-                } else if (state.draggedIndex > state.activeIndex && dropIndex <= state.activeIndex) {
-                    state.activeIndex++;
-                }
-
+            if (state.isEditMode) {
+                // 切換到儲存圖示
+                btnEdit.innerHTML = `
+                    <svg class="icon-check" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                `;
+            } else {
+                // 切換回編輯圖示
+                btnEdit.innerHTML = `
+                    <svg class="icon-edit" viewBox="0 0 24 24">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                    </svg>
+                `;
                 saveSettings();
-                renderMainSlots();
-                updateCalculations();
+            }
+
+            renderMainSlots();
+            updateCalculations();
+        }
+
+        // 觸控拖曳事件
+        function handleTouchStart(e) {
+            const slot = e.target.closest('.currency-slot');
+            state.draggedIndex = parseInt(slot.dataset.index);
+            state.touchStartY = e.touches[0].clientY;
+            slot.classList.add('dragging');
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const slot = document.querySelector(`[data-index="${state.draggedIndex}"]`);
+            if (!slot) return;
+
+            state.touchCurrentY = e.touches[0].clientY;
+
+            // 找到目標位置
+            const slots = Array.from(document.querySelectorAll('.currency-slot'));
+            const targetSlot = slots.find((s, idx) => {
+                if (idx === state.draggedIndex) return false;
+                const rect = s.getBoundingClientRect();
+                return state.touchCurrentY >= rect.top && state.touchCurrentY <= rect.bottom;
+            });
+
+            // 清除所有 drag-over
+            slots.forEach(s => s.classList.remove('drag-over'));
+
+            if (targetSlot) {
+                targetSlot.classList.add('drag-over');
             }
         }
 
-        function handleDragEnd(e) {
-            e.currentTarget.classList.remove('dragging');
-            document.querySelectorAll('.currency-slot').forEach(slot => {
-                slot.classList.remove('drag-over');
+        function handleTouchEnd(e) {
+            finalizeDrag();
+        }
+
+        // 滑鼠拖曳事件
+        function handleMouseDown(e) {
+            e.preventDefault();
+            const slot = e.target.closest('.currency-slot');
+            state.draggedIndex = parseInt(slot.dataset.index);
+            state.touchStartY = e.clientY;
+            slot.classList.add('dragging');
+
+            // 監聽滑鼠移動和放開
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        function handleMouseMove(e) {
+            e.preventDefault();
+            const slot = document.querySelector(`[data-index="${state.draggedIndex}"]`);
+            if (!slot) return;
+
+            state.touchCurrentY = e.clientY;
+
+            // 找到目標位置
+            const slots = Array.from(document.querySelectorAll('.currency-slot'));
+            const targetSlot = slots.find((s, idx) => {
+                if (idx === state.draggedIndex) return false;
+                const rect = s.getBoundingClientRect();
+                return state.touchCurrentY >= rect.top && state.touchCurrentY <= rect.bottom;
+            });
+
+            // 清除所有 drag-over
+            slots.forEach(s => s.classList.remove('drag-over'));
+
+            if (targetSlot) {
+                targetSlot.classList.add('drag-over');
+            }
+        }
+
+        function handleMouseUp(e) {
+            // 移除監聽
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            finalizeDrag();
+        }
+
+        // 完成拖曳
+        function finalizeDrag() {
+            const slots = Array.from(document.querySelectorAll('.currency-slot'));
+            const dragOverSlot = slots.find(s => s.classList.contains('drag-over'));
+
+            if (dragOverSlot) {
+                const dropIndex = parseInt(dragOverSlot.dataset.index);
+
+                if (state.draggedIndex !== null && state.draggedIndex !== dropIndex) {
+                    const draggedCode = state.displaySlots[state.draggedIndex];
+                    state.displaySlots.splice(state.draggedIndex, 1);
+                    state.displaySlots.splice(dropIndex, 0, draggedCode);
+
+                    // 更新 activeIndex
+                    if (state.activeIndex === state.draggedIndex) {
+                        state.activeIndex = dropIndex;
+                    } else if (state.draggedIndex < state.activeIndex && dropIndex >= state.activeIndex) {
+                        state.activeIndex--;
+                    } else if (state.draggedIndex > state.activeIndex && dropIndex <= state.activeIndex) {
+                        state.activeIndex++;
+                    }
+                }
+            }
+
+            // 清理
+            slots.forEach(s => {
+                s.classList.remove('dragging');
+                s.classList.remove('drag-over');
             });
             state.draggedIndex = null;
+
+            renderMainSlots();
+            updateCalculations();
         }
 
         function renderSelectionList(listData) {
@@ -829,6 +998,47 @@
                 return n.toLocaleString('en-US', opts);
             }
         }
+
+        // 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then((registration) => {
+                    console.log('Service Worker 註冊成功:', registration);
+                })
+                .catch((error) => {
+                    console.log('Service Worker 註冊失敗:', error);
+                });
+        }
+
+        // PWA 安裝提示
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // 顯示安裝按鈕
+            document.getElementById('install-button').style.display = 'flex';
+        });
+
+        function promptInstall() {
+            if (!deferredPrompt) {
+                alert('此應用程式已安裝或瀏覽器不支援安裝功能');
+                return;
+            }
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('使用者接受安裝');
+                }
+                deferredPrompt = null;
+                document.getElementById('install-button').style.display = 'none';
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA 已安裝');
+            document.getElementById('install-button').style.display = 'none';
+        });
 
         init();
     </script>
