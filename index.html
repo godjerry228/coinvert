@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Converter Neo</title>
-    
+    <title>Coinvert</title>
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
@@ -14,7 +15,7 @@
         :root {
             --bg-color: #000000;
             --card-bg: #1c1c1e;
-            --active-card-bg: #4a4128; 
+            --active-card-bg: #4a4128;
             --text-color: #ffffff;
             --text-secondary: #8e8e93;
             --accent-color: #ff9f0a;
@@ -23,401 +24,814 @@
             --separator-color: #38383a;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-            margin: 0; padding: 0;
+            margin: 0;
+            padding: 0;
             height: 100vh;
             overflow: hidden;
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
-            display: flex; flex-direction: column;
+            display: flex;
+            flex-direction: column;
         }
 
         /* View Transitions */
         #app-container {
-            position: relative; width: 100%; height: 100%; overflow: hidden;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
+
         .view {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-color: var(--bg-color);
             transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-            display: flex; flex-direction: column; z-index: 1;
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
         }
-        .view.active { transform: translateX(0); z-index: 2; }
-        .view.hidden-right { transform: translateX(100%); z-index: 3; }
-        .view.hidden-left { transform: translateX(-25%); opacity: 0.8; }
+
+        .view.active {
+            transform: translateX(0);
+            z-index: 2;
+        }
+
+        .view.hidden-right {
+            transform: translateX(100%);
+            z-index: 3;
+        }
+
+        .view.hidden-left {
+            transform: translateX(-25%);
+            opacity: 0.8;
+        }
 
         /* Icons */
-        .icon-back { fill: var(--accent-color); width: 22px; height: 22px; }
-        .icon-search { fill: var(--text-secondary); width: 16px; height: 16px; margin-right: 8px; }
+        .icon-back {
+            fill: var(--accent-color);
+            width: 22px;
+            height: 22px;
+        }
+
+        .icon-search {
+            fill: var(--text-secondary);
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+        }
+
+        .icon-settings {
+            fill: var(--accent-color);
+            width: 24px;
+            height: 24px;
+        }
 
         /* --- Main View --- */
         #main-header {
             padding: 10px 20px;
-            display: flex; justify-content: space-between; align-items: flex-start;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             min-height: 60px;
         }
-        .header-title h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
-        .header-time { font-size: 0.75rem; color: #4cd964; margin-top: 4px; }
 
-        /* 刷新按鈕樣式 */
-        .btn-refresh {
-            display: flex; align-items: center; justify-content: center;
-            width: 40px; height: 40px; cursor: pointer;
+        .header-title h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .header-time {
+            font-size: 0.75rem;
+            color: #4cd964;
+            margin-top: 4px;
+        }
+
+        /* 右上角按鈕樣式 */
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-refresh,
+        .btn-settings {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
             border-radius: 50%;
             transition: opacity 0.2s;
         }
-        .btn-refresh:active { opacity: 0.5; background-color: #333; }
-        .icon-refresh { fill: var(--accent-color); width: 24px; height: 24px; }
+
+        .btn-refresh:active,
+        .btn-settings:active {
+            opacity: 0.5;
+            background-color: #333;
+        }
+
+        .icon-refresh {
+            fill: var(--accent-color);
+            width: 24px;
+            height: 24px;
+        }
 
         #currency-slots {
-            flex: 1; padding: 10px 20px;
-            display: flex; flex-direction: column; gap: 10px;
+            flex: 1;
+            padding: 10px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             overflow-y: auto;
         }
 
         .currency-slot {
-            display: flex; align-items: center;
-            background-color: var(--card-bg);
-            border-radius: 14px; padding: 0 16px;
+            display: flex;
+            align-items: center;
+            border-radius: 14px;
             height: 64px;
-            transition: background 0.2s;
+            gap: 8px;
+            overflow: hidden;
+            cursor: grab;
+            transition: opacity 0.2s, transform 0.2s;
         }
-        .currency-slot.active { background-color: var(--active-card-bg); }
+
+        .currency-slot.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .currency-slot.drag-over {
+            transform: translateY(4px);
+        }
+
+        .slot-info {
+            display: flex;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 0 16px;
+            height: 100%;
+            border-radius: 14px;
+        }
+
+        .currency-slot.active .slot-info {
+            background-color: var(--active-card-bg);
+        }
 
         .flag-img {
-            width: 32px; height: 32px;
-            border-radius: 50%; object-fit: cover;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
             margin-right: 14px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             background-color: #333;
         }
 
-        .slot-code { font-weight: 600; font-size: 1.2rem; width: 50px; }
-        .slot-amount { 
-            margin-left: auto; font-size: 1.7rem; font-weight: bolder;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        .slot-code {
+            font-weight: 600;
+            font-size: 1.2rem;
+            width: 50px;
         }
-        .currency-slot.active .slot-amount { color: var(--accent-color); }
+
+        .slot-amount {
+            flex: 1;
+            background-color: var(--card-bg);
+            padding: 0 16px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            font-size: 1.7rem;
+            font-weight: bolder;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-radius: 14px;
+        }
+
+        .currency-slot.active .slot-amount {
+            color: var(--accent-color);
+            background-color: var(--active-card-bg);
+        }
 
         /* --- Keypad --- */
         #keypad {
             padding: 20px 20px 50px;
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
         }
+
         .key-btn {
-            border: none; border-radius: 50%;
-            height: 70px; width: 70px;
-            font-size: 1.8rem; color: white;
+            border: none;
+            border-radius: 30px;
+            height: 70px;
+            width: 100%;
+            font-size: 1.8rem;
+            color: white;
             background-color: var(--keypad-gray);
-            display: flex; justify-content: center; align-items: center;
-            margin: 0 auto; cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            cursor: pointer;
         }
-        .key-btn:active { opacity: 0.7; }
-        .btn-ops { background-color: var(--accent-color); font-size: 2.2rem; padding-bottom: 5px; }
-        .btn-top { background-color: var(--keypad-top-gray); color: black; font-size: 1.4rem; font-weight: 500; }
-        .btn-zero { 
-            grid-column: span 2; width: 100%; border-radius: 35px; 
-            justify-content: flex-start; padding-left: 30px; 
+
+        .key-btn:active {
+            opacity: 0.7;
+        }
+
+        .btn-ops {
+            background-color: var(--accent-color);
+            font-size: 2.2rem;
+            padding-bottom: 5px;
+        }
+
+        .btn-top {
+            background-color: var(--keypad-top-gray);
+            color: black;
+            font-size: 1.4rem;
+            font-weight: 500;
+        }
+
+        .btn-zero {
+            grid-column: span 2;
+            width: 100%;
+            border-radius: 35px;
+            justify-content: flex-start;
+            padding-left: 30px;
         }
 
         /* --- Selection View --- */
         #selection-header {
-            display: flex; align-items: center;
-            padding: 10px 16px; position: relative;
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            position: relative;
             background-color: var(--bg-color);
         }
-        #btn-back { display: flex; align-items: center; color: var(--accent-color); font-size: 1.1rem; cursor: pointer; z-index: 2;}
-        .header-center-title { position: absolute; width: 100%; text-align: center; font-size: 1.1rem; font-weight: 600; top: 12px; left:0; pointer-events: none;}
 
-        #search-container { padding: 5px 16px 10px; background-color: var(--bg-color); }
+        #btn-back {
+            display: flex;
+            align-items: center;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .header-center-title {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            top: 12px;
+            left: 0;
+            pointer-events: none;
+        }
+
+        #search-container {
+            padding: 5px 16px 10px;
+            background-color: var(--bg-color);
+        }
+
         #search-bar {
             background-color: var(--card-bg);
-            border-radius: 10px; padding: 8px 12px;
-            display: flex; align-items: center; color: var(--text-secondary);
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
         }
+
         #search-input {
-            background: transparent; border: none; color: var(--text-color);
-            font-size: 1rem; flex: 1; padding: 0; outline: none;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 1rem;
+            flex: 1;
+            padding: 0;
+            outline: none;
         }
-        
-        #selection-list { flex: 1; overflow-y: auto; padding-left: 16px; }
+
+        #selection-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-left: 16px;
+        }
+
         .selection-item {
-            display: flex; align-items: center;
+            display: flex;
+            align-items: center;
             padding: 12px 16px 12px 0;
             border-bottom: 1px solid var(--separator-color);
             cursor: pointer;
         }
-        .selection-name { flex: 1; font-size: 1.1rem; margin-left: 12px; }
-        .selection-code { color: var(--text-secondary); font-size: 1rem; }
+
+        .selection-name {
+            flex: 1;
+            font-size: 1.1rem;
+            margin-left: 12px;
+        }
+
+        .selection-code {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* --- Settings View --- */
+        .settings-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .settings-section {
+            margin-bottom: 30px;
+        }
+
+        .settings-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            padding-left: 16px;
+        }
+
+        .settings-option {
+            background-color: var(--card-bg);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .settings-label {
+            font-size: 1.1rem;
+        }
+
+        .settings-value {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
     </style>
 </head>
+
 <body>
 
-<div id="app-container">
-    <div id="main-view" class="view active">
-        <header id="main-header">
-            <div class="header-title">
-                <h1>Converter Neo</h1>
-                <div id="update-time" class="header-time">初始化中...</div>
-            </div>
-            <div class="btn-refresh" onclick="fetchRates()">
-                <svg class="icon-refresh" viewBox="0 0 24 24">
-                    <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                </svg>
-            </div>
-        </header>
+    <div id="app-container">
+        <div id="main-view" class="view active">
+            <header id="main-header">
+                <div class="header-title">
+                    <h1>Coinvert</h1>
+                    <div id="update-time" class="header-time">初始化中...</div>
+                </div>
+                <div class="header-actions">
+                    <div class="btn-settings" onclick="openSettingsView()">
+                        <svg class="icon-settings" viewBox="0 0 24 24">
+                            <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" />
+                        </svg>
+                    </div>
+                    <div class="btn-refresh" onclick="fetchRates()">
+                        <svg class="icon-refresh" viewBox="0 0 24 24">
+                            <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+                        </svg>
+                    </div>
+                </div>
+            </header>
 
-        <div id="currency-slots"></div>
+            <div id="currency-slots"></div>
 
-        <div id="keypad">
-            <button class="key-btn btn-top" onclick="handleInput('C')">C</button>
-            <button class="key-btn btn-top" onclick="handleInput('back')">⌫</button>
-            <button class="key-btn btn-top" onclick="alert('功能開發中')">%</button>
-            <button class="key-btn btn-ops" onclick="alert('功能開發中')">÷</button>
-            <button class="key-btn" onclick="handleInput('7')">7</button>
-            <button class="key-btn" onclick="handleInput('8')">8</button>
-            <button class="key-btn" onclick="handleInput('9')">9</button>
-            <button class="key-btn btn-ops" onclick="alert('功能開發中')">×</button>
-            <button class="key-btn" onclick="handleInput('4')">4</button>
-            <button class="key-btn" onclick="handleInput('5')">5</button>
-            <button class="key-btn" onclick="handleInput('6')">6</button>
-            <button class="key-btn btn-ops" onclick="alert('功能開發中')">−</button>
-            <button class="key-btn" onclick="handleInput('1')">1</button>
-            <button class="key-btn" onclick="handleInput('2')">2</button>
-            <button class="key-btn" onclick="handleInput('3')">3</button>
-            <button class="key-btn btn-ops" onclick="alert('功能開發中')">+</button>
-            <button class="key-btn btn-zero" onclick="handleInput('0')">0</button>
-            <button class="key-btn" onclick="handleInput('.')">.</button>
-            <button class="key-btn btn-ops" onclick="alert('功能開發中')">=</button>
+            <div id="keypad">
+                <button class="key-btn btn-top" onclick="handleInput('C')">C</button>
+                <button class="key-btn btn-top" onclick="handleInput('back')">⌫</button>
+                <button class="key-btn btn-top" onclick="alert('功能開發中')">%</button>
+                <button class="key-btn btn-ops" onclick="alert('功能開發中')">÷</button>
+                <button class="key-btn" onclick="handleInput('7')">7</button>
+                <button class="key-btn" onclick="handleInput('8')">8</button>
+                <button class="key-btn" onclick="handleInput('9')">9</button>
+                <button class="key-btn btn-ops" onclick="alert('功能開發中')">×</button>
+                <button class="key-btn" onclick="handleInput('4')">4</button>
+                <button class="key-btn" onclick="handleInput('5')">5</button>
+                <button class="key-btn" onclick="handleInput('6')">6</button>
+                <button class="key-btn btn-ops" onclick="alert('功能開發中')">−</button>
+                <button class="key-btn" onclick="handleInput('1')">1</button>
+                <button class="key-btn" onclick="handleInput('2')">2</button>
+                <button class="key-btn" onclick="handleInput('3')">3</button>
+                <button class="key-btn btn-ops" onclick="alert('功能開發中')">+</button>
+                <button class="key-btn btn-zero" onclick="handleInput('0')">0</button>
+                <button class="key-btn" onclick="handleInput('.')">.</button>
+                <button class="key-btn btn-ops" onclick="alert('功能開發中')">=</button>
+            </div>
+        </div>
+
+        <div id="selection-view" class="view hidden-right">
+            <header id="selection-header">
+                <div id="btn-back" onclick="closeSelectionView()">
+                    <svg class="icon-back" viewBox="0 0 24 24">
+                        <path d="M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z" />
+                    </svg>
+                    <span>返回</span>
+                </div>
+                <div class="header-center-title">貨幣</div>
+            </header>
+            <div id="search-container">
+                <div id="search-bar">
+                    <svg class="icon-search" viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                    </svg>
+                    <input type="text" id="search-input" placeholder="搜尋" oninput="filterCurrencyList()">
+                </div>
+            </div>
+            <div id="selection-list"></div>
+        </div>
+
+        <div id="settings-view" class="view hidden-right">
+            <header id="selection-header">
+                <div id="btn-back" onclick="closeSettingsView()">
+                    <svg class="icon-back" viewBox="0 0 24 24">
+                        <path d="M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z" />
+                    </svg>
+                    <span>返回</span>
+                </div>
+                <div class="header-center-title">設定</div>
+            </header>
+            <div class="settings-content">
+                <div class="settings-section">
+                    <div class="settings-title">預設選取</div>
+                    <div class="settings-option" onclick="openDefaultCurrencySelection()">
+                        <span class="settings-label">預設貨幣</span>
+                        <span class="settings-value" id="default-currency-display">USD</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="selection-view" class="view hidden-right">
-        <header id="selection-header">
-            <div id="btn-back" onclick="closeSelectionView()">
-                <svg class="icon-back" viewBox="0 0 24 24"><path d="M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z"/></svg>
-                <span>返回</span>
-            </div>
-            <div class="header-center-title">貨幣</div>
-        </header>
-        <div id="search-container">
-            <div id="search-bar">
-                <svg class="icon-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                <input type="text" id="search-input" placeholder="搜尋" oninput="filterCurrencyList()">
-            </div>
-        </div>
-        <div id="selection-list"></div>
-    </div>
-</div>
+    <script>
+        const currencyData = [
+            { code: 'TWD', name: '新台幣', country: 'tw' },
+            { code: 'JPY', name: '日圓', country: 'jp' },
+            { code: 'USD', name: '美元', country: 'us' },
+            { code: 'CNY', name: '人民幣', country: 'cn' },
+            { code: 'KRW', name: '韓圓', country: 'kr' },
+            { code: 'HKD', name: '港幣', country: 'hk' },
+            { code: 'EUR', name: '歐元', country: 'eu' },
+            { code: 'VND', name: '越南盾', country: 'vn' },
+            { code: 'THB', name: '泰銖', country: 'th' },
+            { code: 'GBP', name: '英鎊', country: 'gb' },
+            { code: 'MYR', name: '馬來西亞令吉', country: 'my' },
+            { code: 'AUD', name: '澳幣', country: 'au' },
+            { code: 'SGD', name: '新加坡幣', country: 'sg' },
+            { code: 'CAD', name: '加幣', country: 'ca' },
+            { code: 'CHF', name: '瑞士法郎', country: 'ch' },
+            { code: 'PHP', name: '菲律賓披索', country: 'ph' },
+            { code: 'IDR', name: '印尼盾', country: 'id' },
+            { code: 'NZD', name: '紐西蘭元', country: 'nz' },
+            { code: 'INR', name: '印度盧比', country: 'in' }
+        ];
 
-<script>
-    const currencyData = [
-        { code: 'TWD', name: '新台幣', country: 'tw' },
-        { code: 'JPY', name: '日圓', country: 'jp' },
-        { code: 'USD', name: '美元', country: 'us' },
-        { code: 'CNY', name: '人民幣', country: 'cn' },
-        { code: 'KRW', name: '韓圓', country: 'kr' },
-        { code: 'HKD', name: '港幣', country: 'hk' },
-        { code: 'EUR', name: '歐元', country: 'eu' },
-        { code: 'VND', name: '越南盾', country: 'vn' },
-        { code: 'THB', name: '泰銖', country: 'th' },
-        { code: 'GBP', name: '英鎊', country: 'gb' },
-        { code: 'MYR', name: '馬來西亞令吉', country: 'my' },
-        { code: 'AUD', name: '澳幣', country: 'au' },
-        { code: 'SGD', name: '新加坡幣', country: 'sg' },
-        { code: 'CAD', name: '加幣', country: 'ca' },
-        { code: 'CHF', name: '瑞士法郎', country: 'ch' },
-        { code: 'PHP', name: '菲律賓披索', country: 'ph' },
-        { code: 'IDR', name: '印尼盾', country: 'id' },
-        { code: 'NZD', name: '紐西蘭元', country: 'nz' },
-        { code: 'INR', name: '印度盧比', country: 'in' }
-    ];
+        let state = {
+            rates: {},
+            displaySlots: ['TWD', 'JPY', 'USD', 'CNY', 'KRW'],
+            activeIndex: 2,
+            currentValue: '0',
+            changingSlotIndex: null,
+            defaultCurrency: 'USD',
+            draggedIndex: null
+        };
 
-    let state = {
-        rates: {},
-        displaySlots: ['TWD', 'JPY', 'USD', 'CNY', 'KRW'],
-        activeIndex: 2, 
-        currentValue: '0',
-        changingSlotIndex: null
-    };
+        // 從 localStorage 載入設定
+        function loadSettings() {
+            const saved = localStorage.getItem('coinvert-settings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                if (settings.displaySlots) state.displaySlots = settings.displaySlots;
+                if (settings.defaultCurrency) state.defaultCurrency = settings.defaultCurrency;
+                if (settings.activeIndex !== undefined) {
+                    state.activeIndex = settings.activeIndex;
+                } else {
+                    // 根據預設貨幣設定 activeIndex
+                    const index = state.displaySlots.indexOf(state.defaultCurrency);
+                    if (index !== -1) state.activeIndex = index;
+                }
+            }
+        }
 
-    function getFlagUrl(countryCode) {
-        if(!countryCode) return '';
-        return `https://flagcdn.com/w80/${countryCode.toLowerCase()}.png`;
-    }
+        // 儲存設定到 localStorage
+        function saveSettings() {
+            const settings = {
+                displaySlots: state.displaySlots,
+                defaultCurrency: state.defaultCurrency,
+                activeIndex: state.activeIndex
+            };
+            localStorage.setItem('coinvert-settings', JSON.stringify(settings));
+        }
 
-    async function init() {
-        renderMainSlots();
-        renderSelectionList(currencyData);
-        await fetchRates();
-    }
+        function getFlagUrl(countryCode) {
+            if (!countryCode) return '';
+            return `https://flagcdn.com/w80/${countryCode.toLowerCase()}.png`;
+        }
 
-    async function fetchRates() {
-        const timeEl = document.getElementById('update-time');
-        timeEl.innerText = "更新中..."; // 點擊時提供即時回饋
-        try {
-            const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-            const data = await res.json();
-            state.rates = data.rates;
-            
-            const now = new Date();
-            timeEl.innerText = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
-            updateCalculations();
-        } catch (e) {
-            console.error(e);
-            timeEl.innerText = "更新失敗";
-            if(Object.keys(state.rates).length === 0) {
-                state.rates = { USD: 1, TWD: 31.5, JPY: 148.2, CNY: 7.2, KRW: 1330 };
+        async function init() {
+            loadSettings();
+            renderMainSlots();
+            renderSelectionList(currencyData);
+            updateDefaultCurrencyDisplay();
+            await fetchRates();
+        }
+
+        async function fetchRates() {
+            const timeEl = document.getElementById('update-time');
+            timeEl.innerText = "更新中..."; // 點擊時提供即時回饋
+            try {
+                const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await res.json();
+                state.rates = data.rates;
+
+                const now = new Date();
+                timeEl.innerText = `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+                updateCalculations();
+            } catch (e) {
+                console.error(e);
+                timeEl.innerText = "更新失敗";
+                if (Object.keys(state.rates).length === 0) {
+                    state.rates = { USD: 1, TWD: 31.5, JPY: 148.2, CNY: 7.2, KRW: 1330 };
+                    updateCalculations();
+                }
+            }
+        }
+
+        function getInfo(code) {
+            return currencyData.find(c => c.code === code) || { code, name: code, country: 'un' };
+        }
+
+        function renderMainSlots() {
+            const container = document.getElementById('currency-slots');
+            container.innerHTML = '';
+            state.displaySlots.forEach((code, index) => {
+                const info = getInfo(code);
+                const slot = document.createElement('div');
+                slot.className = `currency-slot ${index === state.activeIndex ? 'active' : ''}`;
+                slot.draggable = true;
+                slot.dataset.index = index;
+
+                slot.innerHTML = `
+                <div class="slot-info">
+                    <img src="${getFlagUrl(info.country)}" class="flag-img" alt="${info.code}">
+                    <span class="slot-code">${info.code}</span>
+                </div>
+                <span class="slot-amount" id="amt-${index}">0</span>
+            `;
+
+                // 拖曳事件
+                slot.addEventListener('dragstart', handleDragStart);
+                slot.addEventListener('dragover', handleDragOver);
+                slot.addEventListener('drop', handleDrop);
+                slot.addEventListener('dragend', handleDragEnd);
+
+                const slotInfo = slot.querySelector('.slot-info');
+                slotInfo.onclick = (e) => {
+                    e.stopPropagation();
+                    openSelectionView(index);
+                };
+
+                const slotAmount = slot.querySelector('.slot-amount');
+                slotAmount.onclick = () => {
+                    if (state.activeIndex !== index) {
+                        state.activeIndex = index;
+                        state.currentValue = '0';
+                        renderMainSlots();
+                        updateCalculations();
+                        saveSettings();
+                    }
+                };
+
+                container.appendChild(slot);
+            });
+        }
+
+        function handleDragStart(e) {
+            state.draggedIndex = parseInt(e.currentTarget.dataset.index);
+            e.currentTarget.classList.add('dragging');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            const target = e.currentTarget;
+            if (!target.classList.contains('dragging')) {
+                target.classList.add('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const dropIndex = parseInt(e.currentTarget.dataset.index);
+
+            if (state.draggedIndex !== null && state.draggedIndex !== dropIndex) {
+                const draggedCode = state.displaySlots[state.draggedIndex];
+                state.displaySlots.splice(state.draggedIndex, 1);
+                state.displaySlots.splice(dropIndex, 0, draggedCode);
+
+                // 更新 activeIndex
+                if (state.activeIndex === state.draggedIndex) {
+                    state.activeIndex = dropIndex;
+                } else if (state.draggedIndex < state.activeIndex && dropIndex >= state.activeIndex) {
+                    state.activeIndex--;
+                } else if (state.draggedIndex > state.activeIndex && dropIndex <= state.activeIndex) {
+                    state.activeIndex++;
+                }
+
+                saveSettings();
+                renderMainSlots();
                 updateCalculations();
             }
         }
-    }
 
-    function getInfo(code) {
-        return currencyData.find(c => c.code === code) || { code, name: code, country: 'un' };
-    }
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.currency-slot').forEach(slot => {
+                slot.classList.remove('drag-over');
+            });
+            state.draggedIndex = null;
+        }
 
-    function renderMainSlots() {
-        const container = document.getElementById('currency-slots');
-        container.innerHTML = '';
-        state.displaySlots.forEach((code, index) => {
-            const info = getInfo(code);
-            const slot = document.createElement('div');
-            slot.className = `currency-slot ${index === state.activeIndex ? 'active' : ''}`;
-            
-            slot.onclick = () => {
-                if (state.activeIndex === index) {
-                    openSelectionView(index);
-                } else {
-                    state.activeIndex = index;
-                    state.currentValue = '0';
-                    renderMainSlots();
-                    updateCalculations();
-                }
-            };
-
-            slot.innerHTML = `
-                <img src="${getFlagUrl(info.country)}" class="flag-img" alt="${info.code}">
-                <span class="slot-code">${info.code}</span>
-                <span class="slot-amount" id="amt-${index}">0</span>
-            `;
-            container.appendChild(slot);
-        });
-    }
-
-    function renderSelectionList(listData) {
-        const container = document.getElementById('selection-list');
-        container.innerHTML = '';
-        listData.forEach(curr => {
-            const item = document.createElement('div');
-            item.className = 'selection-item';
-            item.onclick = (e) => {
-                e.stopPropagation();
-                selectCurrency(curr.code);
-            };
-            item.innerHTML = `
+        function renderSelectionList(listData) {
+            const container = document.getElementById('selection-list');
+            container.innerHTML = '';
+            listData.forEach(curr => {
+                const item = document.createElement('div');
+                item.className = 'selection-item';
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    selectCurrency(curr.code);
+                };
+                item.innerHTML = `
                 <img src="${getFlagUrl(curr.country)}" class="flag-img" style="margin-right:12px;" alt="${curr.code}">
                 <span class="selection-name">${curr.name}</span>
                 <span class="selection-code">${curr.code}</span>
             `;
-            container.appendChild(item);
-        });
-    }
+                container.appendChild(item);
+            });
+        }
 
-    function openSelectionView(index) {
-        state.changingSlotIndex = index;
-        document.getElementById('main-view').classList.add('hidden-left');
-        document.getElementById('main-view').classList.remove('active');
-        document.getElementById('selection-view').classList.remove('hidden-right');
-        document.getElementById('selection-view').classList.add('active');
-        document.getElementById('search-input').value = '';
-        renderSelectionList(currencyData);
-    }
+        function openSelectionView(index) {
+            state.changingSlotIndex = index;
+            document.getElementById('main-view').classList.add('hidden-left');
+            document.getElementById('main-view').classList.remove('active');
+            document.getElementById('selection-view').classList.remove('hidden-right');
+            document.getElementById('selection-view').classList.add('active');
+            document.getElementById('search-input').value = '';
+            renderSelectionList(currencyData);
+        }
 
-    function closeSelectionView() {
-        document.getElementById('main-view').classList.remove('hidden-left');
-        document.getElementById('main-view').classList.add('active');
-        document.getElementById('selection-view').classList.add('hidden-right');
-        document.getElementById('selection-view').classList.remove('active');
-        state.changingSlotIndex = null;
-    }
+        function closeSelectionView() {
+            if (state.changingSlotIndex === 'default') {
+                // 從設定頁面返回
+                document.getElementById('settings-view').classList.remove('hidden-left');
+                document.getElementById('settings-view').classList.add('active');
+                document.getElementById('selection-view').classList.add('hidden-right');
+                document.getElementById('selection-view').classList.remove('active');
+            } else {
+                // 從主頁面返回
+                document.getElementById('main-view').classList.remove('hidden-left');
+                document.getElementById('main-view').classList.add('active');
+                document.getElementById('selection-view').classList.add('hidden-right');
+                document.getElementById('selection-view').classList.remove('active');
+            }
+            state.changingSlotIndex = null;
+        }
 
-    function selectCurrency(newCode) {
-        if (state.changingSlotIndex !== null) {
-            state.displaySlots[state.changingSlotIndex] = newCode;
-            state.activeIndex = state.changingSlotIndex;
-            state.currentValue = '0';
-            renderMainSlots();
+        function selectCurrency(newCode) {
+            if (state.changingSlotIndex === 'default') {
+                // 設定預設貨幣
+                state.defaultCurrency = newCode;
+                const index = state.displaySlots.indexOf(newCode);
+                if (index !== -1) {
+                    state.activeIndex = index;
+                }
+                saveSettings();
+                updateDefaultCurrencyDisplay();
+                closeSelectionView();
+            } else if (state.changingSlotIndex !== null) {
+                // 更換 slot 貨幣
+                state.displaySlots[state.changingSlotIndex] = newCode;
+                state.activeIndex = state.changingSlotIndex;
+                state.currentValue = '0';
+                saveSettings();
+                renderMainSlots();
+                updateCalculations();
+                closeSelectionView();
+            }
+        }
+
+        // 設定頁面相關
+        function openSettingsView() {
+            document.getElementById('main-view').classList.add('hidden-left');
+            document.getElementById('main-view').classList.remove('active');
+            document.getElementById('settings-view').classList.remove('hidden-right');
+            document.getElementById('settings-view').classList.add('active');
+        }
+
+        function closeSettingsView() {
+            document.getElementById('main-view').classList.remove('hidden-left');
+            document.getElementById('main-view').classList.add('active');
+            document.getElementById('settings-view').classList.add('hidden-right');
+            document.getElementById('settings-view').classList.remove('active');
+        }
+
+        function openDefaultCurrencySelection() {
+            state.changingSlotIndex = 'default';
+            document.getElementById('settings-view').classList.add('hidden-left');
+            document.getElementById('settings-view').classList.remove('active');
+            document.getElementById('selection-view').classList.remove('hidden-right');
+            document.getElementById('selection-view').classList.add('active');
+            document.getElementById('search-input').value = '';
+            renderSelectionList(currencyData);
+        }
+
+        function updateDefaultCurrencyDisplay() {
+            const info = getInfo(state.defaultCurrency);
+            document.getElementById('default-currency-display').innerText = `${info.name} (${info.code})`;
+        }
+
+        function filterCurrencyList() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = currencyData.filter(c =>
+                c.name.toLowerCase().includes(query) ||
+                c.code.toLowerCase().includes(query)
+            );
+            renderSelectionList(filtered);
+        }
+
+        function handleInput(val) {
+            if (val === 'C') {
+                state.currentValue = '0';
+            } else if (val === 'back') {
+                state.currentValue = state.currentValue.slice(0, -1);
+                if (!state.currentValue || state.currentValue === '-') state.currentValue = '0';
+            } else if (val === '.') {
+                if (!state.currentValue.includes('.')) state.currentValue += '.';
+            } else {
+                if (state.currentValue === '0') state.currentValue = val;
+                else if (state.currentValue.length < 12) state.currentValue += val;
+            }
             updateCalculations();
         }
-        closeSelectionView();
-    }
 
-    function filterCurrencyList() {
-        const query = document.getElementById('search-input').value.toLowerCase();
-        const filtered = currencyData.filter(c => 
-            c.name.toLowerCase().includes(query) || 
-            c.code.toLowerCase().includes(query)
-        );
-        renderSelectionList(filtered);
-    }
+        function updateCalculations() {
+            if (Object.keys(state.rates).length === 0) return;
+            const activeCode = state.displaySlots[state.activeIndex];
+            let inputStr = state.currentValue;
+            if (inputStr.endsWith('.')) inputStr = inputStr.slice(0, -1);
+            const inputVal = parseFloat(inputStr) || 0;
 
-    function handleInput(val) {
-        if (val === 'C') {
-            state.currentValue = '0';
-        } else if (val === 'back') {
-            state.currentValue = state.currentValue.slice(0, -1);
-            if (!state.currentValue || state.currentValue === '-') state.currentValue = '0';
-        } else if (val === '.') {
-            if (!state.currentValue.includes('.')) state.currentValue += '.';
-        } else {
-            if (state.currentValue === '0') state.currentValue = val;
-            else if (state.currentValue.length < 12) state.currentValue += val;
+            const baseUSD = inputVal / (state.rates[activeCode] || 1);
+
+            state.displaySlots.forEach((code, index) => {
+                const el = document.getElementById(`amt-${index}`);
+                if (index === state.activeIndex) {
+                    el.innerText = formatNumber(state.currentValue, true);
+                } else {
+                    const res = baseUSD * (state.rates[code] || 1);
+                    el.innerText = formatNumber(res, false);
+                }
+            });
         }
-        updateCalculations();
-    }
 
-    function updateCalculations() {
-        if (Object.keys(state.rates).length === 0) return;
-        const activeCode = state.displaySlots[state.activeIndex];
-        let inputStr = state.currentValue;
-        if (inputStr.endsWith('.')) inputStr = inputStr.slice(0, -1);
-        const inputVal = parseFloat(inputStr) || 0;
-
-        const baseUSD = inputVal / (state.rates[activeCode] || 1);
-
-        state.displaySlots.forEach((code, index) => {
-            const el = document.getElementById(`amt-${index}`);
-            if (index === state.activeIndex) {
-                el.innerText = formatNumber(state.currentValue, true);
+        function formatNumber(numStr, isInput) {
+            if (isInput) {
+                const parts = numStr.split('.');
+                parts[0] = parseFloat(parts[0]).toLocaleString('en-US');
+                return parts.join('.');
             } else {
-                const res = baseUSD * (state.rates[code] || 1);
-                el.innerText = formatNumber(res, false);
+                let n = parseFloat(numStr);
+                if (isNaN(n) || n === 0) return '0';
+                let opts = { maximumFractionDigits: 2, minimumFractionDigits: 2 };
+                if (n < 0.01) opts = { maximumFractionDigits: 4, minimumFractionDigits: 2 };
+                else if (n > 10000) opts = { maximumFractionDigits: 0 };
+                return n.toLocaleString('en-US', opts);
             }
-        });
-    }
-
-    function formatNumber(numStr, isInput) {
-        if (isInput) {
-            const parts = numStr.split('.');
-            parts[0] = parseFloat(parts[0]).toLocaleString('en-US');
-            return parts.join('.');
-        } else {
-            let n = parseFloat(numStr);
-            if (isNaN(n) || n === 0) return '0';
-            let opts = { maximumFractionDigits: 2, minimumFractionDigits: 2 };
-            if (n < 0.01) opts = { maximumFractionDigits: 4, minimumFractionDigits: 2 };
-            else if (n > 10000) opts = { maximumFractionDigits: 0 };
-            return n.toLocaleString('en-US', opts);
         }
-    }
 
-    init();
-</script>
+        init();
+    </script>
 </body>
+
 </html>
