@@ -1070,7 +1070,14 @@
             state.displaySlots.forEach((code, index) => {
                 const el = document.getElementById(`amt-${index}`);
                 if (index === state.activeIndex) {
-                    el.innerText = formatNumber(state.currentValue, true);
+                    // 顯示當前值和運算符
+                    let displayText = formatNumber(state.currentValue, true);
+                    if (state.operator && state.waitingForNewValue) {
+                        displayText = formatNumber(state.previousValue.toString(), true) + ' ' + state.operator;
+                    } else if (state.operator && !state.waitingForNewValue) {
+                        displayText = formatNumber(state.previousValue.toString(), true) + ' ' + state.operator + ' ' + formatNumber(state.currentValue, true);
+                    }
+                    el.innerText = displayText;
                 } else {
                     const res = baseUSD * (state.rates[code] || 1);
                     el.innerText = formatNumber(res, false);
