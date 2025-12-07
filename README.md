@@ -1,8 +1,8 @@
-# Converter Neo 💱
+# Coinvert 💱
 
 > 極致輕量、無需下載的 iOS 風格匯率計算機 (PWA)
 
-**Converter Neo** 是一個專為 iPhone 使用者設計的網頁版匯率換算工具。它採用 Progressive Web App (PWA) 技術，無需透過 App Store 下載，只要透過 Safari 加入主畫面，即可享有如同原生 App 般的流暢體驗與精美介面。
+**Coinvert** 是一個專為 iPhone 使用者設計的網頁版匯率換算工具。它採用 Progressive Web App (PWA) 技術，無需透過 App Store 下載，只要透過 Safari 加入主畫面，即可享有如同原生 App 般的流暢體驗與精美介面。
 
 [在此處貼上您的 GitHub Pages 網址] 👈 **點擊立即使用**
 
