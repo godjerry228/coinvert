@@ -1,8 +1,8 @@
-const CACHE_NAME = 'coinvert-v1.1.0';
+const CACHE_NAME = 'coinvert-v1.2.1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/app.png',
+  '/coinvert/',
+  '/coinvert/index.html',
+  '/coinvert/app.png',
   'https://flagcdn.com/'
 ];
 

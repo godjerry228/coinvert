@@ -1006,7 +1006,7 @@
 
         // 註冊 Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
+            navigator.serviceWorker.register('/coinvert/sw.js', { scope: '/coinvert/' })
                 .then((registration) => {
                     console.log('Service Worker 註冊成功:', registration);
                 })
