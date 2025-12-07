@@ -533,6 +533,10 @@
                         <span class="settings-label">加入主畫面</span>
                         <span class="settings-value">📱</span>
                     </div>
+                    <div class="settings-option" id="install-ios" onclick="showIOSInstallGuide()" style="display: none;">
+                        <span class="settings-label">安裝說明 (iOS)</span>
+                        <span class="settings-value">📱</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -611,6 +615,7 @@
             renderMainSlots();
             renderSelectionList(currencyData);
             updateDefaultCurrencyDisplay();
+            initInstallButton();
             await fetchRates();
         }
 
@@ -1013,11 +1018,33 @@
         // PWA 安裝提示
         let deferredPrompt;
 
+        // 檢測 iOS
+        function isIOS() {
+            return /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+
+        // 檢測是否已在獨立模式運行（已安裝）
+        function isInStandaloneMode() {
+            return ('standalone' in window.navigator) && (window.navigator.standalone);
+        }
+
+        // 初始化安裝按鈕
+        function initInstallButton() {
+            if (isIOS()) {
+                // iOS 裝置
+                if (!isInStandaloneMode()) {
+                    document.getElementById('install-ios').style.display = 'flex';
+                }
+            }
+        }
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            // 顯示安裝按鈕
+            // 顯示安裝按鈕（Android Chrome）
             document.getElementById('install-button').style.display = 'flex';
+            // 隱藏 iOS 說明
+            document.getElementById('install-ios').style.display = 'none';
         });
 
         function promptInstall() {
@@ -1033,6 +1060,10 @@
                 deferredPrompt = null;
                 document.getElementById('install-button').style.display = 'none';
             });
+        }
+
+        function showIOSInstallGuide() {
+            alert('請點擊 Safari 下方的「分享」按鈕 (📤)，然後選擇「加入主畫面螢幕」即可安裝此應用程式。');
         }
 
         window.addEventListener('appinstalled', () => {
