@@ -1065,7 +1065,8 @@
             if (inputStr.endsWith('.')) inputStr = inputStr.slice(0, -1);
             const inputVal = parseFloat(inputStr) || 0;
 
-            const baseUSD = inputVal / (state.rates[activeCode] || 1);
+            // 判斷是否有運算符號（正在計算中）
+            const isCalculating = state.operator !== null;
 
             state.displaySlots.forEach((code, index) => {
                 const el = document.getElementById(`amt-${index}`);
@@ -1079,8 +1080,13 @@
                     }
                     el.innerText = displayText;
                 } else {
-                    const res = baseUSD * (state.rates[code] || 1);
-                    el.innerText = formatNumber(res, false);
+                    // 如果正在計算中，不更新其他貨幣的匯率
+                    if (!isCalculating) {
+                        const baseUSD = inputVal / (state.rates[activeCode] || 1);
+                        const res = baseUSD * (state.rates[code] || 1);
+                        el.innerText = formatNumber(res, false);
+                    }
+                    // 如果正在計算中，保持原值不變
                 }
             });
         }
